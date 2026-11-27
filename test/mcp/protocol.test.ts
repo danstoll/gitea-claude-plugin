@@ -28,7 +28,7 @@ afterEach(async () => {
 
 interface Setup {
   env?: Record<string, string>;
-  elicitation?: 'accept' | 'decline';
+  elicitation?: 'accept' | 'decline' | 'cancel';
   cwd?: string;
 }
 
@@ -46,9 +46,8 @@ async function connect({ env = {}, elicitation, cwd }: Setup = {}) {
   if (elicitation) {
     client.setRequestHandler(ElicitRequestSchema, (req) => {
       prompts.push(req.params.message);
-      return elicitation === 'accept'
-        ? { action: 'accept', content: { confirm: true } }
-        : { action: 'decline' };
+      if (elicitation === 'accept') return { action: 'accept', content: { confirm: true } };
+      return { action: elicitation };
     });
   }
   const [a, b] = InMemoryTransport.createLinkedPair();
@@ -249,6 +248,24 @@ describe('confirmation of consequential actions', () => {
       arguments: { owner: 'acme', repo: 'tool', confirm: 'acme/tool' },
     });
     expect(errorCode(res)).toBe('CANCELLED');
+  });
+
+  it('falls back to the confirm token when the client cancels the elicitation', async () => {
+    const { client, prompts } = await connect({ env: destructiveEnv, elicitation: 'cancel' });
+    const res = await client.callTool({ name: 'repo_delete', arguments: { owner: 'acme', repo: 'tool' } });
+    expect(prompts).toHaveLength(1);
+    expect(errorCode(res)).toBe('CONFIRMATION_REQUIRED');
+  });
+
+  it('accepts the confirm token after the client cancels the elicitation', async () => {
+    agent.get(ORIGIN).intercept({ path: '/api/v1/repos/acme/tool', method: 'DELETE' }).reply(204, '');
+    const { client } = await connect({ env: destructiveEnv, elicitation: 'cancel' });
+    const res = await client.callTool({
+      name: 'repo_delete',
+      arguments: { owner: 'acme', repo: 'tool', confirm: 'acme/tool' },
+    });
+    expect(res.isError).toBeFalsy();
+    agent.assertNoPendingInterceptors();
   });
 
   it('requires confirmation for merges even though they are write operations', async () => {

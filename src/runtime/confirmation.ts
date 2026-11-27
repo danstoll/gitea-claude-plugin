@@ -10,7 +10,8 @@ type LowLevelServer = McpServer['server'];
  * Obtains an informed confirmation for a consequential action.
  *
  * 1. If the client supports MCP elicitation, the user answers directly in the client UI.
- *    Declining yields CANCELLED.
+ *    Declining yields CANCELLED. A cancelled form (some clients cancel it without showing it)
+ *    counts as "no form", and step 2 applies.
  * 2. Otherwise (or if elicitation fails) the call must carry `confirm` equal to the exact target,
  *    which the model may only send after the user agreed; without it CONFIRMATION_REQUIRED is
  *    returned and nothing is changed.
@@ -53,6 +54,8 @@ async function askViaElicitation(
         required: ['confirm'],
       },
     });
+    // Some clients cancel the form and never show it. Use the confirm token in that case.
+    if (result.action === 'cancel') return 'unavailable';
     return result.action === 'accept' && result.content?.confirm === true ? 'accepted' : 'declined';
   } catch (err) {
     log.debug(`elicitation failed, falling back to the confirm token: ${String(err)}`);
