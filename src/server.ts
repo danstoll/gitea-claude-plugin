@@ -92,7 +92,10 @@ export class GiteaMcpServer {
       );
       this.assertAllowed(tool, ctx);
       if (tool.feature) assertFeature(await ctx.capabilities(), tool.feature);
-      if (tool.confirm) await confirmWithUser(this.mcp.server, await tool.confirm(args, ctx), args.confirm);
+      if (tool.confirm)
+        await confirmWithUser(this.mcp.server, await tool.confirm(args, ctx), args.confirm, {
+          confirmInChat: this.config.confirmInChat,
+        });
       return successResult(await tool.run(args, ctx));
     } catch (err) {
       return errorResult(err);
