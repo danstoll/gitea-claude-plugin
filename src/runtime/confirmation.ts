@@ -12,6 +12,7 @@ type LowLevelServer = McpServer['server'];
  * 1. If the client supports MCP elicitation, the user answers directly in the client UI.
  *    Declining yields CANCELLED. A cancelled form (some clients cancel it without showing it)
  *    counts as "no form", and step 2 applies.
+ *    With confirmInChat (GITEA_CONFIRM_IN_CHAT) the form is not used.
  * 2. Otherwise (or if elicitation fails) the call must carry `confirm` equal to the exact target,
  *    which the model may only send after the user agreed; without it CONFIRMATION_REQUIRED is
  *    returned and nothing is changed.
@@ -20,8 +21,10 @@ export async function confirmWithUser(
   server: LowLevelServer,
   req: ConfirmRequest,
   provided: string | undefined,
+  options: { confirmInChat?: boolean } = {},
 ): Promise<void> {
-  if (server.getClientCapabilities()?.elicitation) {
+  // Some clients reply to the form without showing it. The user can then turn the form off.
+  if (!options.confirmInChat && server.getClientCapabilities()?.elicitation) {
     const answer = await askViaElicitation(server, req);
     if (answer === 'accepted') return;
     if (answer === 'declined') {

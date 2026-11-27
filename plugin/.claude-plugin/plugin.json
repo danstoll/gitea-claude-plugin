@@ -77,6 +77,12 @@
       "title": "Allow insecure HTTP",
       "description": "Permit http:// URLs (sends the token unencrypted). Only for local test instances.",
       "default": false
+    },
+    "confirm_in_chat": {
+      "type": "boolean",
+      "title": "Confirm in the chat",
+      "description": "Do not use the confirmation form. Claude asks you in the chat and sends a confirm token. Turn this on when your client does not show the form (for example the Claude Code desktop app).",
+      "default": false
     }
   }
 }

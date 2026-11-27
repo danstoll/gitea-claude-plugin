@@ -268,6 +268,31 @@ describe('confirmation of consequential actions', () => {
     agent.assertNoPendingInterceptors();
   });
 
+  it('skips the elicitation form when GITEA_CONFIRM_IN_CHAT is set', async () => {
+    const { client, prompts } = await connect({
+      env: { ...destructiveEnv, GITEA_CONFIRM_IN_CHAT: 'true' },
+      elicitation: 'decline',
+    });
+    const res = await client.callTool({ name: 'repo_delete', arguments: { owner: 'acme', repo: 'tool' } });
+    expect(prompts).toHaveLength(0);
+    expect(errorCode(res)).toBe('CONFIRMATION_REQUIRED');
+  });
+
+  it('accepts the confirm token when GITEA_CONFIRM_IN_CHAT is set', async () => {
+    agent.get(ORIGIN).intercept({ path: '/api/v1/repos/acme/tool', method: 'DELETE' }).reply(204, '');
+    const { client, prompts } = await connect({
+      env: { ...destructiveEnv, GITEA_CONFIRM_IN_CHAT: 'true' },
+      elicitation: 'decline',
+    });
+    const res = await client.callTool({
+      name: 'repo_delete',
+      arguments: { owner: 'acme', repo: 'tool', confirm: 'acme/tool' },
+    });
+    expect(prompts).toHaveLength(0);
+    expect(res.isError).toBeFalsy();
+    agent.assertNoPendingInterceptors();
+  });
+
   it('requires confirmation for merges even though they are write operations', async () => {
     agent
       .get(ORIGIN)

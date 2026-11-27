@@ -33,6 +33,8 @@ export interface ServerConfig {
   maxRetries: number;
   caFile: string | undefined;
   useSystemCa: boolean;
+  /** Skip the elicitation form and always use the confirm token in the chat. */
+  confirmInChat: boolean;
   /** Problems found while loading, reported by the connection tools instead of crashing. */
   warnings: string[];
 }
@@ -192,6 +194,7 @@ export function loadConfig(env: Env = process.env): ServerConfig {
     maxRetries: parseIntInRange(envValue(env, 'GITEA_MAX_RETRIES'), 3, 0, 10),
     caFile: caFile ? expandHome(caFile) : undefined,
     useSystemCa: parseBool(envValue(env, 'GITEA_USE_SYSTEM_CA'), false),
+    confirmInChat: parseBool(envValue(env, 'GITEA_CONFIRM_IN_CHAT'), false),
     warnings,
   };
 }
