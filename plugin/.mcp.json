@@ -13,6 +13,7 @@
         "GITEA_USE_SYSTEM_CA": "${user_config.use_system_ca}",
         "GITEA_PROFILES_FILE": "${user_config.profiles_file}",
         "GITEA_ALLOW_HTTP": "${user_config.allow_insecure_http}",
+        "GITEA_CONFIRM_IN_CHAT": "${user_config.confirm_in_chat}",
         "GITEA_WORKDIR": "${CLAUDE_PROJECT_DIR}"
       }
     }
